@@ -9,42 +9,42 @@
 
 #imports
 import sympy as sp
-import pandas as pd
 import numpy as np
 import pylab as pp
-import matplotlib.pyplot as plt
 from sympy import *
 sp.init_printing(use_unicode=True, use_latex='mathjax')
 
 #Constants and variables
 FILENAME = './A1/cf.txt'
+TRAINING_DATA = 1
+ODD = 1
+EVEN = 2
+HUNDRED = 100
+DIVIDER = 0.01
+INPUT = 33
+
 cel = []
 far = []
 
 
-#***********************************************************************
-#Function:   getNumRows
-#Descripion: Returns the number of rows in the passed in matrix
-#Input:      matx - matrix in question
-#Output:     numRows - number of rows in matrix X
-#***********************************************************************
 def getNumRows(matX):
     """
-    Function: getNumRows
-    Description: Returns number of rows of passed in matrix
+    Function:       getNumRows
+    Description:    Returns number of rows of passed in matrix
+    Input:          matx -  Matrix in question
+    Output:         numRows - number of rows in matrix X
     """
     num = shape(matX)
     numRows = num[0]
     return numRows
 
-#******************************************************************************
-#Function:   findW
-#Descripion: Creates matrix W using closed form solution of linear regression
-#Input:      matx - matrix in question
-#Output:     numRows - number of rows in matrix X
-#******************************************************************************
-# W =X.T * X)**-1 * X.T*Y
 def findW(matX, vecY):
+    """
+    Function:   findW
+    Descripion: Creates matrix W using closed form solution of linear regression
+    Input:      matx - matrix in question
+    Output:     numRows - number of rows in matrix X
+    """
     # matW = ((matX.T * matX)**-1) * (matX.T * vecY)
     vecW = np.dot(np.linalg.inv(np.dot(matX.T,matX)), np.dot(matX.T,vecY))
     return vecW
@@ -59,37 +59,34 @@ def genPreds(matX, vecW):
 
     Output: matPreds - matrix of predicted values
     """ 
-    print(vecW.shape)
-    print(vecW.T.shape)
     vecPred = np.dot(matX,vecW)
     return vecPred
 
 
 
 
-#******************************************************************************
-#Function:   findSSE
-#Descripion: Determines the SSE given matrix X,Y,W
-#Input:     matX - matrix of values
-#           vecY - training data
-#           vecW - vector of weights
-#Output:    SSE - Sum of Squared Errors of linear regression
-#******************************************************************************
+
 def findSSE(matX, vecY, vecW):
-
-    SSE = (np.dot(matX,vecW)-vecY)**2
-
-    return (SSE)
+    """
+    Function:   findSSE
+    Descripion: Determines the SSE given matrix X,Y,W
+    Input:     matX - matrix of values
+               vecY - training data
+               vecW - vector of weights
+    Output:    SSE - Sum of Squared Errors of linear regression
+    """
+    sum = 0
+    matSSE = (np.dot(matX,vecW)-vecY)**2
+    numRows = getNumRows(matSSE)
+    for i in range(numRows):
+        sum = sum + matSSE[i]
+    return (sum)
 
 #*****
 # Start Driver
 #*****
 def  driver():
-    TRAINING_DATA = 1
-    ODD = 1
-    EVEN = 2
-    HUNDRED = 100
-    DIVIDER = 0.01
+
     myData = np.loadtxt(FILENAME, delimiter=' ')
     numRows = myData.size
 
@@ -128,15 +125,20 @@ def  driver():
 
     vecPred = genPreds(celBias,vecW)
     SSE = findSSE(celBias,farArr,vecW)
-
+    print("Sum of Squared Errors")
+    print(SSE)
+    out = vecW[ODD] + vecW[0] * INPUT
+    print("Given an input of 33 *C")
+    print("Ouput of: ", str(out))
     pp.figure(TRAINING_DATA)
     pp.plot(celArr,farArr, '.r', label='Training Data')
     pp.plot(celArr, vecPred,'.b', label='Predicted Values')
     x_hlp = np.arange(-ODD,HUNDRED,DIVIDER)
-    y_hlp = vecW[1] + vecW[0]*x_hlp
+    y_hlp = vecW[ODD] + vecW[0]*x_hlp
     pp.plot(x_hlp, y_hlp, 'm',label='Linear Fit')
     pp.xlabel('x (C)')
     pp.ylabel('y(F)')
     pp.legend()
     pp.show()
+
 driver()
