@@ -76,16 +76,19 @@ def findSSE(matX, vecY, vecW):
     Output:    SSE - Sum of Squared Errors of linear regression
     """
     sum = 0
-    matSSE = (np.dot(matX,vecW)-vecY)**2
+    matSSE = (np.dot(matX,vecW)-vecY)**EVEN
     numRows = getNumRows(matSSE)
     for i in range(numRows):
         sum = sum + matSSE[i]
     return (sum)
 
-#*****
-# Start Driver
-#*****
 def  driver():
+    """
+    Function:   driver
+    Descripion: General fucntion for determing SSE uring normal equations
+    Input:      None
+    Output:     None
+    """
 
     myData = np.loadtxt(FILENAME, delimiter=' ')
     numRows = myData.size
