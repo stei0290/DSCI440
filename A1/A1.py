@@ -119,6 +119,7 @@ def  driver():
     #celBias = np.append(celArr, np.ones((numbRows,1))) 
 
     ## Reshape Arrays
+    
     celBias = celBias.reshape(numbRows,EVEN)
     farArr = farArr.reshape(numbRows,ODD)
  

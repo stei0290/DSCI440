@@ -18,9 +18,12 @@ TEST_FILE = './A2/housing_test.txt'
 TRAINING_FILE = './A2/housing_train.txt'
 PRICE_INDEX = 13
 BIAS = 1
+TWO = 2
 
 allData = []
-housePrice = []
+trainPrice = []
+testPrice = []
+testData = []
 
 def findW(matX, vecY):
     """
@@ -57,6 +60,22 @@ def getNumRows(matX):
     numRows = num[0]
     return numRows
 
+def genSSE(vecPred,vecActual):
+    """
+    Function:   genSSE
+    Descripion: Determines the SSE given matrix X,Y,W
+    Input:      vecPred - vector or predicted values
+                vecActual - vector of actaul values
+    Output:    SSE - Sum of Squared Errors
+    """
+
+    sum = 0
+    numRows = getNumRows(vecPred)
+    for i in range(numRows):
+        error = (vecPred[i] - vecActual[i])** TWO
+        sum = sum + error
+    return (sum)
+
 def findSSE(matX, vecY, vecW):
     """
     Function:   findSSE
@@ -67,43 +86,75 @@ def findSSE(matX, vecY, vecW):
     Output:    SSE - Sum of Squared Errors of linear regression
     """
     sum = 0
-    matSSE = (np.dot(matX,vecW)-vecY)**EVEN
+    matSSE = (np.dot(matX,vecW)-vecY)**TWO
     numRows = getNumRows(matSSE)
     for i in range(numRows):
         sum = sum + matSSE[i]
     return (sum)
 
-
 #Read Data
-with open(TRAINING_FILE, "r") as f:
-   raw = f.read()
-   for line in raw.split("\n"):
-    subLine = line.split()
-    allData.append(subLine)
+def readData(fileName):
+    dataList = []
+    with open(fileName, "r") as f:
+        raw = f.read()
+        for line in raw.split("\n"):
+            subLine = line.split()
+            dataList.append(subLine)
+    return dataList
+
+def addBiasnDelLast(array):
+    numInputs = len(array[BIAS])
+    numRows = len(array)
+
+    array = np.insert(array,0, 1, axis = 1)
+    array = np.delete(array,(numInputs), axis=1)
+
+    array = array.reshape(numRows,numInputs)
+    return array
 
 
-for i in range(len(allData)):
-    housePrice.append(allData[i][PRICE_INDEX])
+# Read data into lists
+testData = readData(TEST_FILE)
+trainData = readData(TRAINING_FILE)
 
-numInputs = len(allData[BIAS])
-numRows = len(allData)
-prices = np.array(housePrice, dtype=float)
-inputs = np.array(allData, dtype=float)
-inputs = np.insert(inputs,0, 1, axis = 1)
-inputs = np.delete(inputs,(numInputs), axis=1)
+# Get last ow into its own list
+for i in range(len(trainData)):
+    trainPrice.append(trainData[i][PRICE_INDEX])
 
-print(inputs.shape)
-inputs = inputs.reshape(numRows,numInputs)
-print(inputs.shape)
-print("prices")
-print(prices.shape)
-prices = prices.reshape(numRows,1)
-print(prices.shape)
-vecW = findW(inputs, prices)
+for i in range(len(testData)):
+    testPrice.append(testData[i][PRICE_INDEX])
+
+#convert lists to np.arrays
+trainPrice = np.array(trainPrice, dtype=float)
+testPrice = np.array(testPrice, dtype=float)
+
+trainInputs = np.array(trainData, dtype=float)
+testInputs = np.array(testData,dtype=float)
+
+# Add bias column to fornt and delet last col
+trainInputs = addBiasnDelLast(trainInputs)
+testInputs = addBiasnDelLast(testInputs)
+
+#reshape arary
+numRows = getNumRows(trainPrice)
+trainPrice = trainPrice.reshape(numRows,1)
+numRows =  getNumRows(testInputs)
+testPrice = testPrice.reshape(numRows,1)
+
+
+trainWeights = findW(trainInputs, trainPrice)
 print("Optimal Weights: ")
-print(vecW)
+print(trainWeights)
 
+trainPred = genPreds(trainInputs,trainWeights)
+trainSSE = genSSE(trainPred,trainPrice)
+testPred = genPreds(testInputs, trainWeights)
+testSSE = genSSE(testPred, testPrice)
+print("Training SSE: ")
+print(trainSSE)
 
+print("Test SSE")
+print(testSSE)
 
 
 
