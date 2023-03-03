@@ -12,6 +12,7 @@ import sympy as sp
 import numpy as np
 import pylab as pp
 from sympy import *
+from numpy.linalg import inv
 sp.init_printing(use_unicode=True, use_latex='mathjax')
 
 TEST_FILE = './A2/housing_test.txt'
@@ -19,11 +20,6 @@ TRAINING_FILE = './A2/housing_train.txt'
 PRICE_INDEX = 13
 BIAS = 1
 TWO = 2
-
-allData = []
-trainPrice = []
-testPrice = []
-testData = []
 
 def findW(matX, vecY):
     """
@@ -79,7 +75,7 @@ def findWReg(matX, vecY, lamb):
     idenMat = np.eye(numCols)
     op1 = np.dot(lamb,idenMat)
     op2 = np.dot(matX.T,matX)
-    op3 = (op1 + op2) ** -1
+    op3 = inv((op1 + op2))
     op4 = np.dot(matX.T,vecY)
     vecW = np.dot(op3,op4)
     return vecW
@@ -113,12 +109,35 @@ def findSSEReg(matX, vecY, vecW, lamb):
                 sum - Sum of Squared errors
     """
     sum = 0
-    matSSE = ((vecY - np.dot(matX,vecW))**TWO + lamb * np.dot(vecW.T,vecW) ) / 2
-    numRows = getNumRows(matSSE)
-    for i in range(numRows):
-        sum = sum + matSSE[i]
-    return (lamb, sum)
+    op1 = np.dot(matX,vecW)
+    op2 = (vecY - op1) ** 2
 
+    op3 = np.dot(vecW.T,vecW)
+    op4 = np.dot(lamb,op3)
+    op5 = op2 + op4
+    numRows = getNumRows(op5)
+
+    for i in range(numRows):
+        sum = sum + op5[i]
+
+    return (sum)
+    # matSSE = ((vecY - np.dot(matX,vecW))**TWO + lamb * np.dot(vecW.T,vecW) ) / 2
+    # numRows = getNumRows(matSSE)
+    # for i in range(numRows):
+    #     sum = sum + matSSE[i]
+    # return (sum)
+
+def findSSEReg2(matX, vecY, vecW, lamb):
+    sum = 0
+    numRows = getNumRows(matX)
+
+    for i in range(numRows):
+        op1 = (vecY[i] - np.dot(vecW.T,matX[i])) ** 2
+        op2 = np.dot(vecW.T,vecW)
+        op3 = np.dot(lamb,op2)
+        op4 = op1 + op3
+        sum = sum + op4
+    return sum
 
 def findSSE(matX, vecY, vecW):
     """
@@ -153,7 +172,7 @@ def readData(fileName):
     return dataList
 
 
-def addBiasnDelLast(array):
+def addBiasDelLast(array):
     """
     Function:   addBiasDelLast
     Descripion: adds bas column to front of array and deletes the last column in the array
@@ -169,90 +188,106 @@ def addBiasnDelLast(array):
     array = array.reshape(numRows,numInputs)
     return array
 
+def driver():
+    trainOutput = []
+    testOutput = []
+    testData = []
 
-# Read data into lists
-testData = readData(TEST_FILE)
-trainData = readData(TRAINING_FILE)
+    # Read data into lists
+    testData = readData(TEST_FILE)
+    trainData = readData(TRAINING_FILE)
 
-# Get last ow into its own list
-for i in range(len(trainData)):
-    trainPrice.append(trainData[i][PRICE_INDEX])
+    # Get last ow into its own list
+    for i in range(len(trainData)):
+        trainOutput.append(trainData[i][PRICE_INDEX])
 
-for i in range(len(testData)):
-    testPrice.append(testData[i][PRICE_INDEX])
+    for i in range(len(testData)):
+        testOutput.append(testData[i][PRICE_INDEX])
 
-#convert lists to np.arrays
-trainPrice = np.array(trainPrice, dtype=float)
-testPrice = np.array(testPrice, dtype=float)
+    #convert lists to np.arrays
+    trainOutput = np.array(trainOutput, dtype=float)
+    testOutput = np.array(testOutput, dtype=float)
 
-trainInputs = np.array(trainData, dtype=float)
-testInputs = np.array(testData,dtype=float)
+    trainInputs = np.array(trainData, dtype=float)
+    testInputs = np.array(testData,dtype=float)
 
-# Add bias column to fornt and delet last col
-trainInputs = addBiasnDelLast(trainInputs)
-testInputs = addBiasnDelLast(testInputs)
+    # Add bias column to fornt and delet last col
+    trainInputs = addBiasDelLast(trainInputs)
+    testInputs = addBiasDelLast(testInputs)
 
-#reshape arary
-numRows = getNumRows(trainPrice)
-trainPrice = trainPrice.reshape(numRows,1)
-numRows =  getNumRows(testInputs)
-testPrice = testPrice.reshape(numRows,1)
+    #reshape arary
+    numRows = getNumRows(trainOutput)
+    trainOutput = trainOutput.reshape(numRows,1)
+    numRows =  getNumRows(testInputs)
+    testOutput = testOutput.reshape(numRows,1)
 
 
-trainWeights = findW(trainInputs, trainPrice)
-print("Optimal Weights: ")
-print(trainWeights)
+    trainWeights = findW(trainInputs, trainOutput)
+    print("Optimal Weights: ")
+    print(trainWeights)
 
-trainPred = genPreds(trainInputs,trainWeights)
-trainSSE = genSSE(trainPred,trainPrice)
-testPred = genPreds(testInputs, trainWeights)
-testSSE = genSSE(testPred, testPrice)
-print("Training SSE: ")
-print(trainSSE)
+    trainPred = genPreds(trainInputs,trainWeights)
+    trainSSE = genSSE(trainPred,trainOutput)
+    testPred = genPreds(testInputs, trainWeights)
+    testSSE = genSSE(testPred, testOutput)
+    print("Training SSE: ")
+    print(trainSSE)
 
-print("Test SSE")
-print(testSSE)
+    print("Test SSE")
+    print(testSSE)
 
-# part 4
-lambs = [0.0001, 0.001, 0.01, 0.1, 1, 5]
-lambs = np.array(lambs)
-regularizedWeights = []
-sseArray = []
-print('###')
-for  i in range(len(lambs)):
-    weights = findWReg(trainInputs,trainPrice,lambs[i])
-    regularizedWeights.append(weights)
-    lam, sse = findSSEReg(trainInputs,trainPrice,regularizedWeights[i],lambs[i])
-    # print(str(lam) + ':' + str(sse))
+    # part 4
+    lambs = [0.000001,0.00001,0.0001, 0.001, 0.01, 0.1,0]
+    lambs = np.array(lambs)
+    regularizedWeights = []
+    sseArray = []
+    print('###')
+    for  i in range(len(lambs)):
+        weights = findWReg(trainInputs,trainOutput,lambs[i])
+        regularizedWeights.append(weights)
+        sse = findSSEReg(trainInputs,trainOutput,regularizedWeights[i],lambs[i])
+        # print(str(lam) + ':' + str(sse))
 
-    sseArray.append(sse)
+        sseArray.append(sse)
 
-sseArray = np.array(sseArray)
+    sseArray = np.array(sseArray)
 
-lambs = lambs[:,np.newaxis]
-lambs_SSE = np.append(lambs,sseArray, axis=1)
-
-print(lambs_SSE)
-
-# pp.figure(1)
-# pp.plot(lambs,regularizedWeights, '.r', label='Lambdas and Weights')
-# # pp.plot(celArr, vecPred,'.b', label='Predicted Values')
-# # x_hlp = np.arange(-ODD,HUNDRED,DIVIDER)
-# # y_hlp = vecW[ODD] + vecW[0]*x_hlp
-# # pp.plot(x_hlp, y_hlp, 'm',label='Linear Fit')
-# pp.xlabel('Lambdas')
-# pp.ylabel('Weihts')
-# pp.legend()
-# pp.show()
+    lambs = lambs[:,np.newaxis]
+    lambs_SSE = np.append(lambs,sseArray, axis=1)
+   
+    print(regularizedWeights[1][1])
+    print(regularizedWeights[2][1])
+        
 
 
 
-pp.figure(1)
-pp.plot(lambs, sseArray, '.r', label="lambdas adn weights")
-pp.xlabel('Lambdas')
-pp.ylabel('Sum of Squared Errors')
-pp.legend()
-pp.show()
+    # print("TESTING")
+    # print('Ensure weight calculation is correcet')
+    # regWeght = findWReg(trainInputs,trainOutput,0)
+    # trainWeights = findW(trainInputs,trainOutput)
+
+    # for i in range(len(regWeght)):
+    #     if not (regWeght[i] == trainWeights[i]):
+    #         print("u fucked up")
+    #     else:
+    #         print("Lucky")
+
+    # ss = findSSE(trainInputs, trainOutput,trainWeights)
+    # reg = findSSEReg(trainInputs, trainOutput,regWeght,0)
+    # reg2 = findSSEReg2(trainInputs, trainOutput,regWeght,0)
+    # print(ss)
+    # print(reg)
+    # print(reg2)
+
+    pp.figure(1)
+    pp.plot(lambs, sseArray, '.r', label="lambdas and weights")
+    pp.xlabel('Lambdas')
+    pp.ylabel('Sum of Squared Errors')
+    pp.legend()
+    pp.show()
+driver()
+
+
 
 
 
