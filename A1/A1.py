@@ -65,7 +65,6 @@ def genPreds(matX, vecW):
 
 
 
-
 def findSSE(matX, vecY, vecW):
     """
     Function:   findSSE

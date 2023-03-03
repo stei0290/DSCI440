@@ -60,6 +60,32 @@ def getNumRows(matX):
     numRows = num[0]
     return numRows
 
+def findWReg(matX, vecY, lamb):
+    """
+    Function:   findWReg
+    Descripion: Creates matrix W of weights using regulization term
+    Input:      matx - matrix of inputs
+                vecY - vector of outputs
+                lamb - rugularization term
+    Output:     vecW - vecor of weights
+    """
+    numRows = getNumRows(matX)
+    # print("numrows")
+    # print(numRows)
+    col = shape(matX)
+    # print("Cols")
+    numCols = col[1]
+    # print(numCols)
+    idenMat = np.eye(numCols)
+    op1 = np.dot(lamb,idenMat)
+    op2 = np.dot(matX.T,matX)
+    op3 = (op1 + op2) ** -1
+    op4 = np.dot(matX.T,vecY)
+    vecW = np.dot(op3,op4)
+    return vecW
+
+    # vecW = np.dot((((np.dot(lamb,idenMat) + np.dot(matX.T,matX)) ** -1),np.dot(matX,vecY)))
+
 def genSSE(vecPred,vecActual):
     """
     Function:   genSSE
@@ -76,6 +102,24 @@ def genSSE(vecPred,vecActual):
         sum = sum + error
     return (sum)
 
+def findSSEReg(matX, vecY, vecW, lamb):
+    """
+    Function:   findSSEvar
+    Descripion: Determines the SSE given matrix X,Y,W utilizing a regularization term
+    Input:      vecPred - vector or predicted values
+                vecActual - vector of actaul values
+                lamb - regularization term
+    Output:     lamb - reuglarization temrn used in calculation
+                sum - Sum of Squared errors
+    """
+    sum = 0
+    matSSE = ((vecY - np.dot(matX,vecW))**TWO + lamb * np.dot(vecW.T,vecW) ) / 2
+    numRows = getNumRows(matSSE)
+    for i in range(numRows):
+        sum = sum + matSSE[i]
+    return (lamb, sum)
+
+
 def findSSE(matX, vecY, vecW):
     """
     Function:   findSSE
@@ -86,7 +130,7 @@ def findSSE(matX, vecY, vecW):
     Output:    SSE - Sum of Squared Errors of linear regression
     """
     sum = 0
-    matSSE = (np.dot(matX,vecW)-vecY)**TWO
+    matSSE = (vecY - np.dot(matX,vecW))**TWO
     numRows = getNumRows(matSSE)
     for i in range(numRows):
         sum = sum + matSSE[i]
@@ -94,6 +138,12 @@ def findSSE(matX, vecY, vecW):
 
 #Read Data
 def readData(fileName):
+    """    
+    Function:   readData
+    Descripion: Opens and reads text file
+    Input:      fileName - name of file to read from
+    Output:     dataList - numpy array of data from file being read
+    """
     dataList = []
     with open(fileName, "r") as f:
         raw = f.read()
@@ -102,7 +152,14 @@ def readData(fileName):
             dataList.append(subLine)
     return dataList
 
+
 def addBiasnDelLast(array):
+    """
+    Function:   addBiasDelLast
+    Descripion: adds bas column to front of array and deletes the last column in the array
+    Input:      array - numpy array to be operated on
+    Output:     array - copy of origonal array with modifications
+    """
     numInputs = len(array[BIAS])
     numRows = len(array)
 
@@ -155,6 +212,48 @@ print(trainSSE)
 
 print("Test SSE")
 print(testSSE)
+
+# part 4
+lambs = [0.0001, 0.001, 0.01, 0.1, 1, 5]
+lambs = np.array(lambs)
+regularizedWeights = []
+sseArray = []
+print('###')
+for  i in range(len(lambs)):
+    weights = findWReg(trainInputs,trainPrice,lambs[i])
+    regularizedWeights.append(weights)
+    lam, sse = findSSEReg(trainInputs,trainPrice,regularizedWeights[i],lambs[i])
+    # print(str(lam) + ':' + str(sse))
+
+    sseArray.append(sse)
+
+sseArray = np.array(sseArray)
+
+lambs = lambs[:,np.newaxis]
+lambs_SSE = np.append(lambs,sseArray, axis=1)
+
+print(lambs_SSE)
+
+# pp.figure(1)
+# pp.plot(lambs,regularizedWeights, '.r', label='Lambdas and Weights')
+# # pp.plot(celArr, vecPred,'.b', label='Predicted Values')
+# # x_hlp = np.arange(-ODD,HUNDRED,DIVIDER)
+# # y_hlp = vecW[ODD] + vecW[0]*x_hlp
+# # pp.plot(x_hlp, y_hlp, 'm',label='Linear Fit')
+# pp.xlabel('Lambdas')
+# pp.ylabel('Weihts')
+# pp.legend()
+# pp.show()
+
+
+
+pp.figure(1)
+pp.plot(lambs, sseArray, '.r', label="lambdas adn weights")
+pp.xlabel('Lambdas')
+pp.ylabel('Sum of Squared Errors')
+pp.legend()
+pp.show()
+
 
 
 
