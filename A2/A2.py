@@ -1,18 +1,19 @@
 #*********************************************************************
-#File name:  A2.ipynb
-#Author:     Roman Stein      
-#Date:  	    02/20/23
+#File name:     A2.ipynb
+#Author:        Roman Stein      
+#Date:  	    03/5/23
 #Class: 	    DSCI 440W
-#Assignment: IA1
-#Purpose:    Impliment Linear regression and        
+#Assignment:    IA2
+#Purpose:       Impliment Linear regression and regularization     
 #**********************************************************************
 
 #imports
 import sympy as sp
 import numpy as np
 import pylab as pp
+import matplotlib.pyplot as plt
 from sympy import *
-from numpy.linalg import inv
+from numpy.linalg import inv, norm
 sp.init_printing(use_unicode=True, use_latex='mathjax')
 
 TEST_FILE = './A2/housing_test.txt'
@@ -112,32 +113,45 @@ def findSSEReg(matX, vecY, vecW, lamb):
     op1 = np.dot(matX,vecW)
     op2 = (vecY - op1) ** 2
 
-    op3 = np.dot(vecW.T,vecW)
-    op4 = np.dot(lamb,op3)
-    op5 = op2 + op4
+    # op3 = np.dot(vecW.T,vecW)
+    # op4 = np.dot(lamb,op3) **2
+    op4 = euclidNorm(vecW)
+    op6 = np.dot(lamb,op4)
+    op5 = op2 + op6
     numRows = getNumRows(op5)
 
     for i in range(numRows):
         sum = sum + op5[i]
 
     return (sum)
-    # matSSE = ((vecY - np.dot(matX,vecW))**TWO + lamb * np.dot(vecW.T,vecW) ) / 2
-    # numRows = getNumRows(matSSE)
-    # for i in range(numRows):
-    #     sum = sum + matSSE[i]
-    # return (sum)
 
-def findSSEReg2(matX, vecY, vecW, lamb):
-    sum = 0
-    numRows = getNumRows(matX)
+def euclidNorm(vecW):
+    """
+    Function:   euclidNorm
+    Descripion: Determines the Euclidiean norm of a vector
+    Input:      vecW - Vector to find norm
+    Output:     op3 - L2 norm of vecW
+    """
+    op5 = np.dot(vecW.T,vecW)
+    # op3 = np.sum(vecW)
+    #op3 = norm(vecW)
+    op3 = np.sum(op5)
 
-    for i in range(numRows):
-        op1 = (vecY[i] - np.dot(vecW.T,matX[i])) ** 2
-        op2 = np.dot(vecW.T,vecW)
-        op3 = np.dot(lamb,op2)
-        op4 = op1 + op3
-        sum = sum + op4
-    return sum
+    return(op3)
+
+# Unused fucntion to test that findSSEReg was working properly
+# def findSSEReg2(matX, vecY, vecW, lamb):
+     
+#     sum = 0
+#     numRows = getNumRows(matX)
+
+#     for i in range(numRows):
+#         op1 = (vecY[i] - np.dot(vecW.T,matX[i])) ** 2
+#         op2 = np.dot(vecW.T,vecW)
+#         op3 = np.dot(lamb,op2)
+#         op4 = op1 + op3
+#         sum = sum + op4
+#     return sum
 
 def findSSE(matX, vecY, vecW):
     """
@@ -189,6 +203,12 @@ def addBiasDelLast(array):
     return array
 
 def driver():
+    """
+    Function:   driver
+    Descripion: Handles general manpu;ation for program
+    Input:      none
+    Output:     none
+    """
     trainOutput = []
     testOutput = []
     testData = []
@@ -237,56 +257,64 @@ def driver():
     print(testSSE)
 
     # part 4
-    lambs = [0.000001,0.00001,0.0001, 0.001, 0.01, 0.1,0]
+    # lambs = [0.000001,0.00001,0.0001, 0.001, 0.01, 0.1, 0, 0.0005]
+    lambs = np.linspace(0.000000001,10, 10000)
     lambs = np.array(lambs)
-    regularizedWeights = []
-    sseArray = []
-    print('###')
+    regularizedTrainingWeights = []
+    aTrainSSE = []
+    aTestSSE = []
+    euclidNorms = []
+    smallTrainSSE = 100000
+    minLamb = -1
+
+    print('#Regularized Model#')
     for  i in range(len(lambs)):
         weights = findWReg(trainInputs,trainOutput,lambs[i])
-        regularizedWeights.append(weights)
-        sse = findSSEReg(trainInputs,trainOutput,regularizedWeights[i],lambs[i])
-        # print(str(lam) + ':' + str(sse))
+        norm = euclidNorm(weights)
+        regularizedTrainingWeights.append(weights)
+        train = findSSEReg(trainInputs,trainOutput,regularizedTrainingWeights[i],lambs[i])
+        test = findSSEReg(testInputs, testOutput, regularizedTrainingWeights[i], lambs[i])
+        euclidNorms.append(norm)
 
-        sseArray.append(sse)
+        aTrainSSE.append(train)
+        if (train <= smallTrainSSE):
+            smallTrainSSE = train
+            minLamb = lambs[i]
+            smallTestSSE = test
+        aTestSSE.append(test)
 
-    sseArray = np.array(sseArray)
+    print("Smallest Traing SSE")
+    print(smallTrainSSE)
+    print('Smallest Test SSE')
+    print(smallTestSSE)
+    print("Optimal Lambda")
+    print(minLamb)
+    euclidNorms = np.array(euclidNorms)
+    aTrainSSE = np.array(aTrainSSE)
+    aTestSSE = np.array(aTestSSE)
 
-    lambs = lambs[:,np.newaxis]
-    lambs_SSE = np.append(lambs,sseArray, axis=1)
-   
-    print(regularizedWeights[1][1])
-    print(regularizedWeights[2][1])
-        
+    plt.figure(1)
+    plt.subplot(211)
+    plt.plot(lambs, aTrainSSE, label="Lambda vs Training SSE")
+    plt.plot(lambs, aTestSSE,label="Lambdas vs Test SSE")
+    plt.xlabel("Lambdas")
+    plt.ylabel("SSE")
+    plt.title("Lambdas and SSE")
+    plt.legend()
+
+    plt.figure(2)
+    plt.subplot(211)
+    plt.plot(lambs, euclidNorms, label="Lambdas vs Euclidean Norms")
+    plt.xlabel("Lambdas")
+    plt.ylabel("Euclidean 2 norms")
+    plt.title("Lambdas and Euclidean Norms")
+    plt.legend()
 
 
 
-    # print("TESTING")
-    # print('Ensure weight calculation is correcet')
-    # regWeght = findWReg(trainInputs,trainOutput,0)
-    # trainWeights = findW(trainInputs,trainOutput)
+    plt.show()
 
-    # for i in range(len(regWeght)):
-    #     if not (regWeght[i] == trainWeights[i]):
-    #         print("u fucked up")
-    #     else:
-    #         print("Lucky")
-
-    # ss = findSSE(trainInputs, trainOutput,trainWeights)
-    # reg = findSSEReg(trainInputs, trainOutput,regWeght,0)
-    # reg2 = findSSEReg2(trainInputs, trainOutput,regWeght,0)
-    # print(ss)
-    # print(reg)
-    # print(reg2)
-
-    pp.figure(1)
-    pp.plot(lambs, sseArray, '.r', label="lambdas and weights")
-    pp.xlabel('Lambdas')
-    pp.ylabel('Sum of Squared Errors')
-    pp.legend()
-    pp.show()
 driver()
-
 
 
 
