@@ -11,6 +11,7 @@
 import sympy as sp
 import numpy as np
 import pylab as pp
+import math
 import csv
 import matplotlib.pyplot as plt
 from sympy import *
@@ -45,22 +46,6 @@ def readCSVData(fileName):
             dataList.append(row)
     return dataList
 
-def addBiasDelLast(array):
-    """
-    Function:   addBiasDelLast
-    Descripion: adds bas column to front of array and deletes the last column in the array
-    Input:      array - numpy array to be operated on
-    Output:     array - copy of origonal array with modifications
-    """
-    numInputs = len(array[BIAS])
-    numRows = len(array)
-
-    array = np.insert(array,0, 1, axis = 1)
-    array = np.delete(array,(numInputs), axis=1)
-
-    array = array.reshape(numRows,numInputs)
-    return array
-
 def getNumRows(matX):
     """
     Function:       getNumRows
@@ -72,6 +57,61 @@ def getNumRows(matX):
 
     numRows = num[0]
     return numRows
+
+def calcBenOfSplit(root, leaf1, leaf2):
+    """
+    Function:       calcBenOfSplit
+    Description:    Calculates the amount of information gain for a specific split of a feater into two leafs.
+    Input:          root - array of stratig features
+                    leaf1 - array 1 of restuling split from root
+                    leaf2 - array 2 of resutling split from root
+    Output:         
+    """
+    rootProb = calcFeatureEntropy(root)
+    leaf1Prob = calcFeatureEntropy(leaf1)
+    leaf2Prob = calcFeatureEntropy(leaf2)
+    rootLen = len(root)
+    leaf1Len = len(leaf1)
+    leaf2Len = len(leaf2)
+    flow1 = leaf1Len / rootLen
+    flow2 = leaf2Len / rootLen
+
+    benOfSplit = rootProb - ((leaf1Prob * flow1) + (leaf2Prob * flow2))
+
+    return benOfSplit
+
+
+
+
+   
+
+
+
+def calcFeatureEntropy(feature):
+    prob0 = 0
+    prob1 = 0
+    num0 = 0
+    num1 = 0
+    numFeatures = len(feature)
+    for i in range(numFeatures):
+        if (feature[i] == 0):
+            num0 += 1
+        elif (feature[i] == 1):
+            num1 += 1
+        else:
+            print ("bad data")
+            return(1)
+
+    prob0 = num0 / numFeatures
+    prob1 = num1 / numFeatures
+
+    entropy = -((prob0 * math.log2(prob0)) + (prob1 * math.log2(prob1)))
+
+
+    return(entropy)
+
+
+
 
 
 
@@ -85,10 +125,10 @@ def driver():
 
     testData = readCSVData(TEST_FILE)
     trainData = readCSVData(TRAIN_FILE)
-    testLen = len(testData[0])
-    trainlen = len(trainData[0])
-    testLabel_Index = testLen - BIAS
-    trainLabel_Index = trainlen - BIAS
+    testLabel_Index = 0
+    trainLabel_Index = 0
+
+
 
     #Apply outpts to its own array
     for i in range(len(trainData)):
@@ -105,18 +145,24 @@ def driver():
     trainInputs = np.array(trainData, dtype=float)
     testInputs = np.array(testData,dtype=float)
 
-    # Add bias column to front and delete last last column
-    trainInputs = addBiasDelLast(trainInputs)
-    testInputs = addBiasDelLast(testInputs)
+    numRows = len(trainOutput)
+
+    #Delte label from feature array
+    trainInputs = np.delete(trainInputs,0, axis=1)
+    testInputs = np.delete(testInputs,0, axis=1)
 
     #reshape arary
-    numRows = getNumRows(trainOutput)
     trainOutput = trainOutput.reshape(numRows,1)
     numRows =  getNumRows(testInputs)
     testOutput = testOutput.reshape(numRows,1)
 
+    print(shape(trainInputs))
+
+
 
     # print(trainInputs)
 
+## Using entorpy nad benefit of split we dhuld cycle through all possble slits to find the one tha maximizes benefit
 
+#Testin Area
 driver()
