@@ -58,7 +58,7 @@ def getNumRows(matX):
     numRows = num[0]
     return numRows
 
-def calcBenOfSplit(root, leaf1, leaf2):
+def calcBenOfSplit(root, output):
     """
     Function:       calcBenOfSplit
     Description:    Calculates the amount of information gain for a specific split of a feater into two leafs.
@@ -67,24 +67,31 @@ def calcBenOfSplit(root, leaf1, leaf2):
                     leaf2 - array 2 of resutling split from root
     Output:         
     """
-    rootProb = calcFeatureEntropy(root)
-    leaf1Prob = calcFeatureEntropy(leaf1)
-    leaf2Prob = calcFeatureEntropy(leaf2)
+    leaf0 = []
+    leaf1 = []
+    rootEntropy = calcFeatureEntropy(output)
+    # print(f"rootEntropy: {rootEntropy}")
     rootLen = len(root)
+    for i in range(rootLen):
+        if(root[i] == 0):
+            leaf0.append(output[i])
+        elif(root[i] == 1):
+            leaf1.append(output[i])
+        else:
+            print("Bad data")
+            return
+    leaf0Entropy = calcFeatureEntropy(leaf0)
+    # print(f"leaf 0 entropy: {leaf0Entropy}")
+    leaf1Entropy = calcFeatureEntropy(leaf1)
+    # print(f"leaf 1 entropy: {leaf1Entropy}")
+    leaf0Len = len(leaf0)
     leaf1Len = len(leaf1)
-    leaf2Len = len(leaf2)
+    flow0 = leaf0Len / rootLen
     flow1 = leaf1Len / rootLen
-    flow2 = leaf2Len / rootLen
 
-    benOfSplit = rootProb - ((leaf1Prob * flow1) + (leaf2Prob * flow2))
+    benOfSplit = rootEntropy - ((leaf0Entropy * flow0) + (leaf1Entropy * flow1))
 
     return benOfSplit
-
-
-
-
-   
-
 
 
 def calcFeatureEntropy(feature):
@@ -93,20 +100,29 @@ def calcFeatureEntropy(feature):
     num0 = 0
     num1 = 0
     numFeatures = len(feature)
-    for i in range(numFeatures):
-        if (feature[i] == 0):
-            num0 += 1
-        elif (feature[i] == 1):
-            num1 += 1
+    if not (numFeatures == 0):
+        for i in range(numFeatures):
+            if (feature[i] == 0):
+                num0 += 1
+            elif (feature[i] == 1):
+                num1 += 1
+            else:
+                print ("bad entropy data")
+                return(1)
+        if not (num0 == 0):
+            prob0 = num0 / numFeatures
+        if not (num1 ==0):
+            prob1 = num1 / numFeatures
+        if not (prob1 == 0 or prob0 == 0):
+            entropy = (-(prob0 * math.log2(prob0)) - (prob1 * math.log2(prob1)))
+        elif (prob0 == 0):
+            entropy = -(prob1 * math.log2(prob1))
+        elif (prob1 == 0):
+            entropy = -(prob0 * math.log2(prob0))
         else:
-            print ("bad data")
-            return(1)
-
-    prob0 = num0 / numFeatures
-    prob1 = num1 / numFeatures
-
-    entropy = -((prob0 * math.log2(prob0)) + (prob1 * math.log2(prob1)))
-
+            entropy = 0
+    else:
+        entropy = 0
 
     return(entropy)
 
@@ -142,21 +158,56 @@ def driver():
     testOutput = np.array(testOutput, dtype=float)
 
     #Create input array
-    trainInputs = np.array(trainData, dtype=float)
-    testInputs = np.array(testData,dtype=float)
+    trainFeatures = np.array(trainData, dtype=float)
+    testFeatures = np.array(testData,dtype=float)
 
-    numRows = len(trainOutput)
+    numTrainFeatures = len(trainOutput)
 
     #Delte label from feature array
-    trainInputs = np.delete(trainInputs,0, axis=1)
-    testInputs = np.delete(testInputs,0, axis=1)
+    trainFeatures = np.delete(trainFeatures,0, axis=1)
+    testFeatures = np.delete(testFeatures,0, axis=1)
 
     #reshape arary
-    trainOutput = trainOutput.reshape(numRows,1)
-    numRows =  getNumRows(testInputs)
-    testOutput = testOutput.reshape(numRows,1)
+    trainOutput = trainOutput.reshape(numTrainFeatures,1)
+    numTestFeatures =  getNumRows(testFeatures)
+    testOutput = testOutput.reshape(numTestFeatures,1)
+    numTrainFeatures = len(trainFeatures)
 
-    print(shape(trainInputs))
+
+    # print(trainInputs[0])
+    # tamir = trainInputs.T
+    # print(tamir[0])
+    # Determine Root Node
+    maxGain = -1
+    index = -1
+    featuresTranspose = trainFeatures.T
+    num = len(featuresTranspose)
+    for i in range(num):
+        gain = calcBenOfSplit(featuresTranspose[i], trainOutput)
+        print(f"Feature: {i} Information gain: {gain}")
+        if (gain > maxGain):
+            maxGain = gain
+            index = i
+
+    for i in range (len(featuresTranspose[i])):
+        gain = calcBenOfSplit(featuresTranspose[i],featuresTranspose[index])
+    print()
+    print(f"The fature located at index: {index} has most information gain of: {maxGain}")
+
+    print()
+    print("Test Data")
+    numCorrect = 0
+    numWrong = 0
+    print("Im not sure how to usehte test data with my tee since it doenst perfectly divide it")
+
+    print()
+    print("DT with Early Stopping")
+    outPut
+    for i in range(num):
+        if (i == index):
+            return
+        else:
+            gain
 
 
 
@@ -165,4 +216,16 @@ def driver():
 ## Using entorpy nad benefit of split we dhuld cycle through all possble slits to find the one tha maximizes benefit
 
 #Testin Area
+# if(len(root) == len(result)):
+#     print('Len Good')
+# print(calcBenOfSplit(root,output))
+# feature = [[1],[1],[1],[0],[0],[0],[0],[0],[0],[1],[1],[1],[1],[0]]
+# output =  [1,1,1,1,1,1,1,1,1,0,0,0,0,0]
+# # print(calcBenOfSplit(feature,output))
+# feature = np.array(feature)
+# print(feature.T)
+# print(calcFeatureEntropy(feature, output))
+# root = [1,1,1,1,1,0,0,0,0]
+# print(calcFeatureEntropy(root))
+
 driver()
