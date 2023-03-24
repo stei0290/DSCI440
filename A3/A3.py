@@ -93,6 +93,54 @@ def calcBenOfSplit(root, output):
 
     return benOfSplit
 
+def calcPrediction(feature, output):
+    output0 = []
+    output1 = []
+    numCorrect0 = 0
+    numWrong0 = 0
+    numCorrect1 = 0
+    numWrong1 = 0
+    for i in range(len(feature)):
+        if (feature[i] == 0):
+            output0.append(output[i])
+            # if(output[i] == 0):
+            #     feature0out0 += 1
+            # elif (output[i] == 1):
+            #     feature0out1 += 1
+        elif (feature[i]==1):
+            output1.append(output[i])
+            # if(output[i] == 0):
+            #     feature1out0 += 1
+            # elif (output[i] == 1):
+            #     feature1out1 += 1
+
+    output0 = np.array(output0)
+    output1 = np.array(output1)
+    mean0 = round(np.mean(output0))
+    mean1 = round(np.mean(output1))
+
+    for i in range(len(feature)):
+        if (feature[i] == 0):
+            if (output[i] == mean0):
+                numCorrect0 += 1
+            else:
+                numWrong0 += 1
+
+        if (feature[i] == 1):
+            if (output[i] == mean1):
+                numCorrect1 += 1
+            else:
+                numWrong1 += 1
+    error = (numWrong0 + numWrong1) / len(feature)
+    # print(f"Num Correct {numCorrect0} - % correct = {(numCorrect0 / (len(feature)))}")
+    # print(f"Num Wrong = {numWrong1} % wrong = {numWrong1 / (len(feature))}")
+    # print(error)
+
+
+    return(mean0,mean1, error)
+
+
+
 
 def calcFeatureEntropy(feature):
     prob0 = 0
@@ -173,36 +221,40 @@ def driver():
     testOutput = testOutput.reshape(numTestFeatures,1)
     numTrainFeatures = len(trainFeatures)
 
-
-    # print(trainInputs[0])
-    # tamir = trainInputs.T
-    # print(tamir[0])
-    # Determine Root Node
+    #Start Calculating Stump
+    print('###Training Data###')
     maxGain = -1
     index = -1
-    featuresTranspose = trainFeatures.T
-    num = len(featuresTranspose)
+    trainingFeaturesTranspose = trainFeatures.T
+    num = len(trainingFeaturesTranspose)
     for i in range(num):
-        gain = calcBenOfSplit(featuresTranspose[i], trainOutput)
-        print(f"Feature: {i} Information gain: {gain}")
+        gain = calcBenOfSplit(trainingFeaturesTranspose[i], trainOutput)
+        print(f"Feature: {(i + 1)} Information gain: {gain}")
         if (gain > maxGain):
             maxGain = gain
             index = i
 
-    for i in range (len(featuresTranspose[i])):
-        gain = calcBenOfSplit(featuresTranspose[i],featuresTranspose[index])
+    # for i in range (len(featuresTranspose[i])):
+    #     gain = calcBenOfSplit(featuresTranspose[i],featuresTranspose[index])
     print()
-    print(f"The fature located at index: {index} has most information gain of: {maxGain}")
+    print(f"The feature located at index: {(index + 1)} has most information gain of: {maxGain}")
+
+    option0, option1, meanError = calcPrediction(trainingFeaturesTranspose[index],trainOutput)
+    print(f"For feature {(index + 1)} if value is 0: we predict {option0}, else if value is 1: we predict {option1}")
+    print(f"Mean error of stummp: {meanError}")
 
     print()
-    print("Test Data")
-    numCorrect = 0
-    numWrong = 0
-    print("Im not sure how to usehte test data with my tee since it doenst perfectly divide it")
+    print("###Test Data###")
+    testFeaturesTranspose = testFeatures.T
+    num = len(testFeaturesTranspose)
+    option0, option1, meanError = calcPrediction(testFeaturesTranspose[index], testOutput)
+
+
+    print(f"For feature {(index + 1)} if value is 0: we predict {option0}, else if value is 1: we predict {option1}")  
+    print(f"Mean error of stummp: {meanError}")
 
     print()
     print("DT with Early Stopping")
-    outPut
     for i in range(num):
         if (i == index):
             return
@@ -219,9 +271,7 @@ def driver():
 # if(len(root) == len(result)):
 #     print('Len Good')
 # print(calcBenOfSplit(root,output))
-# feature = [[1],[1],[1],[0],[0],[0],[0],[0],[0],[1],[1],[1],[1],[0]]
-# output =  [1,1,1,1,1,1,1,1,1,0,0,0,0,0]
-# # print(calcBenOfSplit(feature,output))
+# print(calcBenOfSplit(feature,output))
 # feature = np.array(feature)
 # print(feature.T)
 # print(calcFeatureEntropy(feature, output))
@@ -229,3 +279,12 @@ def driver():
 # print(calcFeatureEntropy(root))
 
 driver()
+
+# feature = [1,1,1,0,0,0,0,0,0,1,1,1,1,0]
+# output =  [1,1,1,1,1,1,1,1,1,0,0,0,0,0]
+# option0, option1, error = calcPrediction(feature,output)
+# print(option0)
+# print(option1)
+# print(error)
+
+
