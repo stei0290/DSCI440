@@ -61,22 +61,25 @@ def getNumRows(matX):
 def calcBenOfSplit(root, output):
     """
     Function:       calcBenOfSplit
-    Description:    Calculates the amount of information gain for a specific split of a feater into two leafs.
-    Input:          root - array of stratig features
-                    leaf1 - array 1 of restuling split from root
-                    leaf2 - array 2 of resutling split from root
+    Description:    Calculates the amount of information gain for a specific split of a feature into two leafs.
+    Input:          root -  decsion stump
+                    output -  class labels for rows
     Output:         
     """
     leaf0 = []
     leaf1 = []
+    leaf0Index = []
+    leaf1Index = []
     rootEntropy = calcFeatureEntropy(output)
     # print(f"rootEntropy: {rootEntropy}")
     rootLen = len(root)
     for i in range(rootLen):
         if(root[i] == 0):
             leaf0.append(output[i])
+            leaf0Index.append[i]
         elif(root[i] == 1):
             leaf1.append(output[i])
+            leaf1Index.append[i]
         else:
             print("Bad data")
             return
@@ -91,9 +94,16 @@ def calcBenOfSplit(root, output):
 
     benOfSplit = rootEntropy - ((leaf0Entropy * flow0) + (leaf1Entropy * flow1))
 
-    return benOfSplit
+    return (benOfSplit, leaf0Index, leaf1Index)
 
 def calcPrediction(feature, output):
+    """
+    Function:   calcPrediction
+    Descripion: Uses faeture to predict class label of data. 
+    Input:      feature - feature to classify label
+                output - Class labels for inputs
+    Output:    SSE - Sum of Squared Errors
+    """
     output0 = []
     output1 = []
     numCorrect0 = 0
@@ -103,16 +113,8 @@ def calcPrediction(feature, output):
     for i in range(len(feature)):
         if (feature[i] == 0):
             output0.append(output[i])
-            # if(output[i] == 0):
-            #     feature0out0 += 1
-            # elif (output[i] == 1):
-            #     feature0out1 += 1
         elif (feature[i]==1):
             output1.append(output[i])
-            # if(output[i] == 0):
-            #     feature1out0 += 1
-            # elif (output[i] == 1):
-            #     feature1out1 += 1
 
     output0 = np.array(output0)
     output1 = np.array(output1)
@@ -132,17 +134,34 @@ def calcPrediction(feature, output):
             else:
                 numWrong1 += 1
     error = (numWrong0 + numWrong1) / len(feature)
-    # print(f"Num Correct {numCorrect0} - % correct = {(numCorrect0 / (len(feature)))}")
-    # print(f"Num Wrong = {numWrong1} % wrong = {numWrong1 / (len(feature))}")
-    # print(error)
-
-
     return(mean0,mean1, error)
 
+def predict(option0, option1, feature, output):
+    numCorrect = 0
+    numWrong = 0
+    for i in range(len(feature)):
+        if (feature[i] == 0):
+            if(output[i] == option0):
+                numCorrect +=1
+            else:
+                numWrong +=1
+        if (feature[i] == 1):
+            if(output[i] == option1):
+                numCorrect +=1
+            else:
+                numWrong += 1
 
+    meanError = numWrong / len(feature)
+    return(meanError)
 
 
 def calcFeatureEntropy(feature):
+    """
+    Function:   calcFeatureEntropy
+    Descripion: Calculates the entropy of a feature
+    Input:      feature - array of feature values
+    Output:     entropy -  the entropy of the feature
+    """
     prob0 = 0
     prob1 = 0
     num0 = 0
@@ -225,14 +244,18 @@ def driver():
     print('###Training Data###')
     maxGain = -1
     index = -1
+    leafNode0 = []
+    leafNode1 = []
     trainingFeaturesTranspose = trainFeatures.T
     num = len(trainingFeaturesTranspose)
     for i in range(num):
-        gain = calcBenOfSplit(trainingFeaturesTranspose[i], trainOutput)
+        gain, leaf0Index, leaf1Index, leafNode0,leafNode1 = calcBenOfSplit(trainingFeaturesTranspose[i], trainOutput)
         print(f"Feature: {(i + 1)} Information gain: {gain}")
         if (gain > maxGain):
             maxGain = gain
             index = i
+            leafNode0 = leaf0Index
+            leafNode1 = leaf1Index
 
     # for i in range (len(featuresTranspose[i])):
     #     gain = calcBenOfSplit(featuresTranspose[i],featuresTranspose[index])
@@ -247,19 +270,24 @@ def driver():
     print("###Test Data###")
     testFeaturesTranspose = testFeatures.T
     num = len(testFeaturesTranspose)
-    option0, option1, meanError = calcPrediction(testFeaturesTranspose[index], testOutput)
-
-
-    print(f"For feature {(index + 1)} if value is 0: we predict {option0}, else if value is 1: we predict {option1}")  
-    print(f"Mean error of stummp: {meanError}")
+    error = predict(option0,option1,testFeaturesTranspose[index],testOutput)
+    print(f"Using index {(index + 1)} as a predcitor on the test data we achieved an error rate of {error}%")
 
     print()
     print("DT with Early Stopping")
-    for i in range(num):
-        if (i == index):
-            return
-        else:
-            gain
+    maxGain = -1
+    index = -1
+    trainingFeaturesTranspose = trainFeatures.T
+    d = 3
+    for i in range(d):
+        
+        gain, leaf0Index, leaf1Index = calcBenOfSplit(trainingFeaturesTranspose[i], trainOutput)
+        print(f"Feature: {(i + 1)} Information gain: {gain}")
+        if (gain > maxGain):
+            maxGain = gain
+            index = i
+            leafNode0 = leaf0Index
+            leafNode1 = leaf1Index
 
 
 
@@ -278,7 +306,7 @@ def driver():
 # root = [1,1,1,1,1,0,0,0,0]
 # print(calcFeatureEntropy(root))
 
-driver()
+
 
 # feature = [1,1,1,0,0,0,0,0,0,1,1,1,1,0]
 # output =  [1,1,1,1,1,1,1,1,1,0,0,0,0,0]
@@ -286,5 +314,7 @@ driver()
 # print(option0)
 # print(option1)
 # print(error)
+
+driver()
 
 
